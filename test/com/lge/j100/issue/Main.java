@@ -27,211 +27,229 @@ import org.junit.jupiter.api.Test;
 
 public class Main {
 
-    private static final String URL = "data/Consumer_Complaints.csv";
+	private static final String URL = "data/Consumer_Complaints.csv";
 
-    @Test
-    public void quiz1() throws URISyntaxException, IOException {
+	@Test
+	public void quiz1() throws URISyntaxException, IOException {
 
-        Path path = Paths.get(URL);
-        try (BufferedReader in = Files.newBufferedReader(path)) {
-            ExecutorService exec = Executors.newSingleThreadScheduledExecutor();
-            Future<List<String>> future = exec.submit(new Callable<List<String>>() {
-                public List<String> call() {
-                    List<String> byCompany = new ArrayList<>();
-                    try {
+		Path path = Paths.get(URL);
+		try (BufferedReader in = Files.newBufferedReader(path)) {
+			ExecutorService exec = Executors.newSingleThreadScheduledExecutor();
+			Future<List<String>> future = exec
+					.submit(new Callable<List<String>>() {
+						public List<String> call() {
+							List<String> byCompany = new ArrayList<>();
+							try {
 
-                        List<Complain> compaints = loadDataset(in);
-                        Map<String, Long> counter = new TreeMap<>();
-                        for (Complain c : compaints) {
-                            String key = c.getCompany();
-                            counter.put(key, counter.containsKey(key) ? counter.get(key) + 1
-                                    : Long.valueOf(1));
-                        }
+								List<Complain> compaints = loadDataset(in);
+								Map<String, Long> counter = new TreeMap<>();
+								for (Complain c : compaints) {
+									String key = c.getCompany();
+									counter.put(key,
+											counter.containsKey(key)
+													? counter.get(key) + 1
+													: Long.valueOf(1));
+								}
 
-                        List<Entry<String, Long>> cntList = new ArrayList<>(counter.entrySet());
-                        Comparator<Entry<String, Long>> cmp = new Comparator<Entry<String, Long>>() {
-                            @Override
-                            public int compare(Entry<String, Long> l, Entry<String, Long> r) {
-                                return Long.compare(r.getValue(), l.getValue());
-                            }
-                        };
-                        cntList.sort(cmp);
-                        for (int i = 0; i < 10 && i < cntList.size(); ++i) {
-                            byCompany.add(cntList.get(i).getKey());
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    return byCompany;
-                }
-            });
+								List<Entry<String, Long>> cntList = new ArrayList<>(
+										counter.entrySet());
+								Comparator<Entry<String, Long>> cmp = new Comparator<Entry<String, Long>>() {
+									@Override
+									public int compare(Entry<String, Long> l,
+											Entry<String, Long> r) {
+										return Long.compare(r.getValue(),
+												l.getValue());
+									}
+								};
+								cntList.sort(cmp);
+								for (int i = 0; i < 10
+										&& i < cntList.size(); ++i) {
+									byCompany.add(cntList.get(i).getKey());
+								}
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+							return byCompany;
+						}
+					});
 
-            List<String> byCompany = future.get();
-            System.out.println(byCompany.size());
-            terminateThreads(exec);
-        } catch (InterruptedException | ExecutionException e) {
-            e.printStackTrace();
-        }
-    }
+			List<String> byCompany = future.get();
+			System.out.println(byCompany.size());
+			terminateThreads(exec);
+		} catch (InterruptedException | ExecutionException e) {
+			e.printStackTrace();
+		}
+	}
 
-    private static void terminateThreads(ExecutorService executor) throws InterruptedException {
-        if (executor.awaitTermination(3, TimeUnit.SECONDS)) {
-            System.out.println("task completed");
-        } else {
-            System.out.println("Forcing shutdown...");
-            executor.shutdownNow();
-        }
-    }
+	private static void terminateThreads(ExecutorService executor)
+			throws InterruptedException {
+		if (executor.awaitTermination(3, TimeUnit.SECONDS)) {
+			System.out.println("task completed");
+		} else {
+			System.out.println("Forcing shutdown...");
+			executor.shutdownNow();
+		}
+	}
 
-    List<Complain> loadDataset(BufferedReader in) throws IOException {
-        CsvReader csv = new CsvReader(URL);
-        if (csv.readHeaders()) {
-            // List<String> colNames = new
-            // LinkedList<String>(Arrays.asList(csv.getHeaders()));
-        }
+	List<Complain> loadDataset(BufferedReader in) throws IOException {
+		CsvReader csv = new CsvReader(URL);
+		if (csv.readHeaders()) {
+			// List<String> colNames = new
+			// LinkedList<String>(Arrays.asList(csv.getHeaders()));
+		}
 
-        List<Complain> complains = new LinkedList<>();
-        while (csv.readRecord()) {
-            Complain fields = new Complain(Arrays.asList(csv.getValues()));
-            complains.add(fields);
-        }
+		List<Complain> complains = new LinkedList<>();
+		while (csv.readRecord()) {
+			int card = csv.getColumnCount();
+			String[] r = csv.getValues();
+			if (card == 18) {
+				Complain fields = new Complain(Arrays.asList(r));
+				complains.add(fields);
+			} else {
+				System.out.println("[ERROR]" + card + ":" + Arrays.toString(r));
+			}
+		}
 
-        return complains;
-    }
+		return complains;
+	}
 }
 
 class Complain {
-    private LocalDate dataReceived;
-    private String product;
-    private String subproduct;
-    private String issue;
-    private String subissue;
-    private String consumerComplaintNarrative;
-    private String companyPublicResponse;
-    private String company;
-    private String state;
-    private String zipCode;
-    private String tags;
-    private String consumerConsentProvided;
-    private String submittedVia;
-    private LocalDate dateSentToCompany;
-    private String companyResponseToConsumer;
-    private boolean timelyResponse;
-    private boolean consumerDisputed;
-    private String complaintId;
+	private LocalDate dataReceived;
+	private String product;
+	private String subproduct;
+	private String issue;
+	private String subissue;
+	private String consumerComplaintNarrative;
+	private String companyPublicResponse;
+	private String company;
+	private String state;
+	private String zipCode;
+	private String tags;
+	private String consumerConsentProvided;
+	private String submittedVia;
+	private LocalDate dateSentToCompany;
+	private String companyResponseToConsumer;
+	private boolean timelyResponse;
+	private boolean consumerDisputed;
+	private String complaintId;
 
-    final static DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/d/yyyy");
+	final static DateTimeFormatter formatter = DateTimeFormatter
+			.ofPattern("MM/d/yyyy");
 
-    public Complain(List<String> next) {
-        int index = 0;
-        this.dataReceived = LocalDate.parse(next.get(index++), formatter);
-        this.product = next.get(index++);
-        this.subproduct = next.get(index++);
-        this.issue = next.get(index++);
-        this.subissue = next.get(index++);
-        this.consumerComplaintNarrative = next.get(index++);
-        this.companyPublicResponse = next.get(index++);
-        this.company = next.get(index++).trim();
-        this.state = next.get(index++);
-        this.zipCode = next.get(index++);
-        this.tags = next.get(index++);
-        this.consumerConsentProvided = next.get(index++);
-        this.submittedVia = next.get(index++);
-        this.dateSentToCompany = LocalDate.parse(next.get(index++), formatter);
-        this.companyResponseToConsumer = next.get(index++);
-        this.timelyResponse = "Yes".equals(next.get(index++));
-        this.consumerDisputed = "Yes".equals(next.get(index++));
-        this.complaintId = next.get(index++);
-    }
+	public Complain(List<String> next) {
+		int index = 0;
 
-    public LocalDate getDataReceived() {
-        return dataReceived;
-    }
+		this.dataReceived = LocalDate.parse(next.get(index++), formatter);
+		this.product = next.get(index++);
+		this.subproduct = next.get(index++);
+		this.issue = next.get(index++);
+		this.subissue = next.get(index++);
+		this.consumerComplaintNarrative = next.get(index++);
+		this.companyPublicResponse = next.get(index++);
+		this.company = next.get(index++).trim();
+		this.state = next.get(index++);
+		this.zipCode = next.get(index++);
+		this.tags = next.get(index++);
+		this.consumerConsentProvided = next.get(index++);
+		this.submittedVia = next.get(index++);
+		this.dateSentToCompany = LocalDate.parse(next.get(index++), formatter);
+		this.companyResponseToConsumer = next.get(index++);
+		this.timelyResponse = "Yes".equals(next.get(index++));
+		this.consumerDisputed = "Yes".equals(next.get(index++));
+		this.complaintId = next.get(index++);
+	}
 
-    public String getProduct() {
-        return product;
-    }
+	public LocalDate getDataReceived() {
+		return dataReceived;
+	}
 
-    public String getSubproduct() {
-        return subproduct;
-    }
+	public String getProduct() {
+		return product;
+	}
 
-    public String getIssue() {
-        return issue;
-    }
+	public String getSubproduct() {
+		return subproduct;
+	}
 
-    public String getSubissue() {
-        return subissue;
-    }
+	public String getIssue() {
+		return issue;
+	}
 
-    public String getConsumerComplaintNarrative() {
-        return consumerComplaintNarrative;
-    }
+	public String getSubissue() {
+		return subissue;
+	}
 
-    public String getCompanyPublicResponse() {
-        return companyPublicResponse;
-    }
+	public String getConsumerComplaintNarrative() {
+		return consumerComplaintNarrative;
+	}
 
-    public String getCompany() {
-        return company;
-    }
+	public String getCompanyPublicResponse() {
+		return companyPublicResponse;
+	}
 
-    public String getState() {
-        return state;
-    }
+	public String getCompany() {
+		return company;
+	}
 
-    public String getZipCode() {
-        return zipCode;
-    }
+	public String getState() {
+		return state;
+	}
 
-    public String getTags() {
-        return tags;
-    }
+	public String getZipCode() {
+		return zipCode;
+	}
 
-    public String getConsumerConsentProvided() {
-        return consumerConsentProvided;
-    }
+	public String getTags() {
+		return tags;
+	}
 
-    public String getSubmittedVia() {
-        return submittedVia;
-    }
+	public String getConsumerConsentProvided() {
+		return consumerConsentProvided;
+	}
 
-    public LocalDate getDateSentToCompany() {
-        return dateSentToCompany;
-    }
+	public String getSubmittedVia() {
+		return submittedVia;
+	}
 
-    public String getCompanyResponseToConsumer() {
-        return companyResponseToConsumer;
-    }
+	public LocalDate getDateSentToCompany() {
+		return dateSentToCompany;
+	}
 
-    public boolean isTimelyResponse() {
-        return timelyResponse;
-    }
+	public String getCompanyResponseToConsumer() {
+		return companyResponseToConsumer;
+	}
 
-    public boolean isConsumerDisputed() {
-        return consumerDisputed;
-    }
+	public boolean isTimelyResponse() {
+		return timelyResponse;
+	}
 
-    public String getComplaintId() {
-        return complaintId;
-    }
+	public boolean isConsumerDisputed() {
+		return consumerDisputed;
+	}
 
-    public static DateTimeFormatter getFormatter() {
-        return formatter;
-    }
+	public String getComplaintId() {
+		return complaintId;
+	}
 
-    @Override
-    public String toString() {
-        return "Complain [dataReceived=" + dataReceived + ", product=" + product + ", subproduct="
-                + subproduct + ", issue=" + issue + ", subissue=" + subissue
-                + ", consumerComplaintNarrative=" + consumerComplaintNarrative
-                + ", companyPublicResponse=" + companyPublicResponse + ", company=" + company
-                + ", state=" + state + ", zipCode=" + zipCode + ", tags=" + tags
-                + ", consumerConsentProvided=" + consumerConsentProvided + ", submittedVia="
-                + submittedVia + ", dateSentToCompany=" + dateSentToCompany
-                + ", companyResponseToConsumer=" + companyResponseToConsumer + ", timelyResponse="
-                + timelyResponse + ", consumerDisputed=" + consumerDisputed + ", complaintId="
-                + complaintId + "]";
-    }
+	public static DateTimeFormatter getFormatter() {
+		return formatter;
+	}
+
+	@Override
+	public String toString() {
+		return "Complain [dataReceived=" + dataReceived + ", product=" + product
+				+ ", subproduct=" + subproduct + ", issue=" + issue
+				+ ", subissue=" + subissue + ", consumerComplaintNarrative="
+				+ consumerComplaintNarrative + ", companyPublicResponse="
+				+ companyPublicResponse + ", company=" + company + ", state="
+				+ state + ", zipCode=" + zipCode + ", tags=" + tags
+				+ ", consumerConsentProvided=" + consumerConsentProvided
+				+ ", submittedVia=" + submittedVia + ", dateSentToCompany="
+				+ dateSentToCompany + ", companyResponseToConsumer="
+				+ companyResponseToConsumer + ", timelyResponse="
+				+ timelyResponse + ", consumerDisputed=" + consumerDisputed
+				+ ", complaintId=" + complaintId + "]";
+	}
 
 }
