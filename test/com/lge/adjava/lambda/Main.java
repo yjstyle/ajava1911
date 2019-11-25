@@ -54,10 +54,7 @@ class Main {
 				myComparing(String::length));
 	}
 
-	Comparator<String> myComparing(
-			Function<String, Integer> f) {
-		return (l, r) -> f.apply(l).compareTo(f.apply(r));
-	}
+	
 
 	@Disabled
 	@Test
