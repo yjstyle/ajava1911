@@ -1,5 +1,9 @@
 package com.lge.adjava.lambda;
 
+import java.lang.ref.PhantomReference;
+import java.lang.ref.WeakReference;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -7,6 +11,9 @@ import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
+import java.util.Random;
+import java.util.Vector;
 import java.util.concurrent.Callable;
 import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
@@ -24,9 +31,134 @@ import java.util.stream.IntStream;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+class Logger {
+	enum Level {
+		Error, Info, Verbose
+	}
+
+	static final Level gLevel = Level.Error;
+
+	static void info(String msg) {
+		if (Level.Info.compareTo(gLevel) <= 0) {
+			// gLevel < Error
+		}
+	}
+
+	static void info(Supplier<String> msg) {
+		if (Level.Info.compareTo(gLevel) <= 0) {
+			System.out.println(msg.get());
+		}
+	}
+}
+
 // ctrl+f5
 class Main {
-	// @Disabled
+	@Test
+	void testComposition() {
+		UnaryOperator<Integer> plus = (f) -> f + 10;
+		UnaryOperator<Integer> mul = (s) -> s * 5;
+		UnaryOperator<Integer> composition
+			= (v) -> mul.apply(plus.apply(v));
+		
+		Integer v = Integer.valueOf(1);
+		Integer mid = composition.apply(v);
+	}
+
+	@Disabled
+	@Test
+	void testDeffered() {
+		Logger.info(() -> "x =" + 2);
+	}
+
+	final Random R = new Random();
+	ArrayList<Integer> ints = new ArrayList<>();
+
+	void run(int v) {
+		ints.add(v);
+	}
+
+	@Disabled
+	@Test
+	void testCapturePractice() {
+
+		R.ints().limit(10).forEach((v) -> {
+			WeakReference<Main> main = new WeakReference<Main>(
+					this);
+			if (main.get() != null) {
+				Main main_ = main.get();
+				main_.run(v);
+				main_ = null;
+			}
+		});
+
+		System.out.println(ints);
+	}
+
+	Path f = Paths.get("C:\\Log.log"); // p1
+
+	void testMethod() {
+		Integer f = Integer.valueOf(0); // p2
+
+//		Comparator<String> c = (f, s) // p3
+//		-> Integer.compare(f.length(), s.length());
+	}
+
+	@Disabled
+	@Test
+	void testCaputreMemoryLeak() {
+		Runnable r = () -> {
+			final WeakReference<Main> my_this = new WeakReference<>(
+					this);
+			// PhantomReference<>
+			Main main = my_this.get();
+			if (!Objects.isNull(main)) {
+
+			}
+		};
+
+	}
+
+	void memberMethod(int param) {
+		class LocalClass {
+			void child() {
+				System.out.println(param);
+			}
+		}
+		new LocalClass().child();
+
+		int localVar = 2;
+		Runnable r = () -> {
+			System.out.println(localVar);
+		};
+		// localVar = 6;
+		r.run();
+	}
+
+	@Disabled
+	@Test
+	void testCaputre() {
+		List<Integer> src = List.of(1, 2, 3);
+		List<Integer> dst = new Vector<>(); // Fail-fast
+		List<Thread> ts = new ArrayList<>();
+
+		for (Integer p : src) {
+			Thread t = new Thread(() -> {
+				dst.add(p);
+			});
+			t.start();
+			ts.add(t);
+		}
+
+		ts.stream().forEach(t -> {
+			try {
+				t.join();
+			} catch (InterruptedException e) {
+			}
+		});
+
+	}
+
+	@Disabled
 	@Test
 	void testFunctionalPractice2() {
 		Runnable task = () -> System.out.println("h");
@@ -51,10 +183,15 @@ class Main {
 	@Test
 	void testCompare() {
 		Collections.sort(new LinkedList<String>(),
-				myComparing(String::length));
+				Comparator.comparing(String::length));
+		// myComparing(String::length)
+		// (s)->s.length()
 	}
 
-	
+	private <T, U extends Comparable<U>> Comparator<T> myComparing(
+			Function<T, U> f) {
+		return (l, r) -> f.apply(l).compareTo(f.apply(r));
+	}
 
 	@Disabled
 	@Test
