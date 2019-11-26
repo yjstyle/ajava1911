@@ -25,13 +25,107 @@ import java.util.stream.Collectors;
 import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+import java.util.stream.Collector.Characteristics;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 class Main {
+	//@Disabled
+	@Test
+	void testCollectorHelperPractice3() {
+		Stream<Integer> numbers = newIntegerStream();
+		newIntStream().average();
+		OptionalDouble od = numbers.collect(
+				Collector.of(() -> new long[2], (a, i) -> {
+					a[0] += i;
+					a[1]++;
+				}, (a1, a2) -> {
+					a1[0] += a2[0];
+					a1[1] += a2[1];
+					return a1;
+				}, (l) -> {
+					return l[1] == 0 ? OptionalDouble.empty()
+							: OptionalDouble.of(l[0] / l[1]);
+				}));
+		
+		od.ifPresent(System.out::println);
+		/*
+		 * 
+		 *  (a, i)->{
+		a[0]+=i;
+		a[1]++;
+	}, (a1, a2)->{
+		a1[0]+=a2[0];
+		a1[1]+=a2[1];
+		return a1;
+	}, (l) -> l[1]==0? OptionalDouble.empty(): l[0]/l[1],
+			Characteristics.CONCURRENT))
+		 */
 
-	// @Disabled
+		od.ifPresent(System.out::println);
+
+	}
+
+	@Disabled
+	@Test
+	void testCollectorHelperPractice2() {
+//		Memory Pool로 현재 시스템의 메모리사용량에 대해(getUsed) 
+//		DoubleSummaryStatistics 을 구하세요
+
+		List<MemoryPoolMXBean> beans = ManagementFactory
+				.getMemoryPoolMXBeans();
+
+		DoubleSummaryStatistics dss = beans.stream()
+				.map((MemoryPoolMXBean bean) -> bean.getUsage())
+				.collect(Collectors.summarizingDouble(
+						(MemoryUsage t) -> t.getUsed()));
+		System.out.println(dss);
+		MemoryUsage usage = beans.get(0).getUsage();
+		long youngUsedMemory = usage.getUsed();
+
+//		{count=8, sum=34289560.000000, min=0.000000,
+//		average=4286195.000000, max=22020096.000000}
+
+	}
+
+	@Disabled
+	@Test
+	void testCollectorHelperPractice() {
+		class Customer {
+			String name;
+			int points;
+
+			Customer(String name, int points) {
+				this.name = name;
+				this.points = points;
+			}
+
+			int getPoints() {
+				return this.points;
+			}
+
+			String getName() {
+				return this.name;
+			}
+		}
+		List<Customer> customers = List.of(
+				new Customer("John P.", 15),
+				new Customer("Sarah M.", 200),
+				new Customer("Charles B.", 150),
+				new Customer("Mary T.", 1));
+//		John P.Sarah M.Charles B.Mary T.
+//		366
+
+		String seq = customers.stream().map(c -> c.getName())
+				.collect(Collectors.joining());
+		System.out.println(seq);
+		Integer sum = customers.stream().map(c -> c.getPoints())
+				.reduce(0, (l, r) -> l + r);
+
+	}
+
+	@Disabled
 	@Test
 	void testCollectorHelper() {
 		List<Integer> lst = newIntegerStream().collect(

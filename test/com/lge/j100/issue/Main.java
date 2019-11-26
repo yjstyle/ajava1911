@@ -10,6 +10,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
@@ -22,6 +23,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
 
@@ -33,45 +35,23 @@ public class Main {
 	public void quiz1() throws URISyntaxException, IOException {
 
 		Path path = Paths.get(URL);
-		try (BufferedReader in = Files.newBufferedReader(path)) {
-			ExecutorService exec = Executors.newSingleThreadScheduledExecutor();
-			Future<List<String>> future = exec
-					.submit(new Callable<List<String>>() {
-						public List<String> call() {
-							List<String> byCompany = new ArrayList<>();
-							try {
+		try (
+				BufferedReader in = Files.newBufferedReader(path)
+		) {
+			ExecutorService exec = Executors
+					.newSingleThreadScheduledExecutor();
+			Future<List<String>> future = exec.submit(() -> {
 
-								List<Complain> compaints = loadDataset(in);
-								Map<String, Long> counter = new TreeMap<>();
-								for (Complain c : compaints) {
-									String key = c.getCompany();
-									counter.put(key,
-											counter.containsKey(key)
-													? counter.get(key) + 1
-													: Long.valueOf(1));
-								}
-
-								List<Entry<String, Long>> cntList = new ArrayList<>(
-										counter.entrySet());
-								Comparator<Entry<String, Long>> cmp = new Comparator<Entry<String, Long>>() {
-									@Override
-									public int compare(Entry<String, Long> l,
-											Entry<String, Long> r) {
-										return Long.compare(r.getValue(),
-												l.getValue());
-									}
-								};
-								cntList.sort(cmp);
-								for (int i = 0; i < 10
-										&& i < cntList.size(); ++i) {
-									byCompany.add(cntList.get(i).getKey());
-								}
-							} catch (IOException e) {
-								e.printStackTrace();
-							}
-							return byCompany;
-						}
-					});
+				return loadDataset(in).stream()
+						.collect(Collectors.groupingBy(
+								Complain::getCompany,
+								Collectors.counting()))
+						.entrySet().stream()
+						.sorted(Comparator.comparing(Entry<String, Long>::getValue)
+								.reversed())
+						.limit(10).map(e -> e.getKey())
+						.collect(Collectors.toList());
+			});
 
 			List<String> byCompany = future.get();
 			System.out.println(byCompany.size());
@@ -106,7 +86,8 @@ public class Main {
 				Complain fields = new Complain(Arrays.asList(r));
 				complains.add(fields);
 			} else {
-				System.out.println("[ERROR]" + card + ":" + Arrays.toString(r));
+				System.out.println(
+						"[ERROR]" + card + ":" + Arrays.toString(r));
 			}
 		}
 
@@ -140,7 +121,8 @@ class Complain {
 	public Complain(List<String> next) {
 		int index = 0;
 
-		this.dataReceived = LocalDate.parse(next.get(index++), formatter);
+		this.dataReceived = LocalDate.parse(next.get(index++),
+				formatter);
 		this.product = next.get(index++);
 		this.subproduct = next.get(index++);
 		this.issue = next.get(index++);
@@ -153,7 +135,8 @@ class Complain {
 		this.tags = next.get(index++);
 		this.consumerConsentProvided = next.get(index++);
 		this.submittedVia = next.get(index++);
-		this.dateSentToCompany = LocalDate.parse(next.get(index++), formatter);
+		this.dateSentToCompany = LocalDate.parse(next.get(index++),
+				formatter);
 		this.companyResponseToConsumer = next.get(index++);
 		this.timelyResponse = "Yes".equals(next.get(index++));
 		this.consumerDisputed = "Yes".equals(next.get(index++));
@@ -238,18 +221,22 @@ class Complain {
 
 	@Override
 	public String toString() {
-		return "Complain [dataReceived=" + dataReceived + ", product=" + product
-				+ ", subproduct=" + subproduct + ", issue=" + issue
-				+ ", subissue=" + subissue + ", consumerComplaintNarrative="
-				+ consumerComplaintNarrative + ", companyPublicResponse="
-				+ companyPublicResponse + ", company=" + company + ", state="
-				+ state + ", zipCode=" + zipCode + ", tags=" + tags
-				+ ", consumerConsentProvided=" + consumerConsentProvided
-				+ ", submittedVia=" + submittedVia + ", dateSentToCompany="
+		return "Complain [dataReceived=" + dataReceived + ", product="
+				+ product + ", subproduct=" + subproduct + ", issue="
+				+ issue + ", subissue=" + subissue
+				+ ", consumerComplaintNarrative="
+				+ consumerComplaintNarrative
+				+ ", companyPublicResponse=" + companyPublicResponse
+				+ ", company=" + company + ", state=" + state
+				+ ", zipCode=" + zipCode + ", tags=" + tags
+				+ ", consumerConsentProvided="
+				+ consumerConsentProvided + ", submittedVia="
+				+ submittedVia + ", dateSentToCompany="
 				+ dateSentToCompany + ", companyResponseToConsumer="
 				+ companyResponseToConsumer + ", timelyResponse="
-				+ timelyResponse + ", consumerDisputed=" + consumerDisputed
-				+ ", complaintId=" + complaintId + "]";
+				+ timelyResponse + ", consumerDisputed="
+				+ consumerDisputed + ", complaintId=" + complaintId
+				+ "]";
 	}
 
 }
