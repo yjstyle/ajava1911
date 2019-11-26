@@ -37,19 +37,18 @@ class Main {
 		List<Integer> lst = newIntegerStream().collect(
 				Collectors.toCollection(LinkedList<Integer>::new));
 		newIntegerStream().collect(Collectors.toUnmodifiableList());
-	
+
 		Collections.unmodifiableList(
 				(newIntegerStream().collect(Collectors.toList())));
-		
+
 		String str = newIntegerStream().map(String::valueOf)
-			.collect(Collectors.joining());
+				.collect(Collectors.joining());
 		System.out.println(str);
-		
+
 		DoubleSummaryStatistics s = newIntegerStream().collect(
-				Collectors.summarizingDouble(
-						Integer::intValue));
+				Collectors.summarizingDouble(Integer::intValue));
 		System.out.println(s);
-		
+
 	}
 
 	@Disabled
@@ -72,43 +71,44 @@ class Main {
 	@Disabled
 	@Test
 	void testCollect2() {
-//		// ctrl 1
-//		List<Integer> lst = 
-//			newIntegerStream().collect(new Collector<Integer,
-//					List<Integer>, List<Integer>>(){
-//		@Override
-//		public Supplier<List<Integer>> supplier() {
-//			return LinkedList<Integer>::new;
-//		}
-//
-//		@Override
-//		public BiConsumer<List<Integer>, Integer> accumulator() {
-//			return (lst, t) -> lst.add(t);
-//		}
-//
-//		@Override
-//		public BinaryOperator<List<Integer>> combiner() {
-//			return (l, r) -> {
-//				l.addAll(r);
-//				return l;
-//			};
-//		}
-//
-//		@Override
-//		public Function<List<Integer>, List<Integer>> finisher() {
-//			return Function.identity();
-//		}
-//
-//		@Override
-//		public Set<Characteristics> characteristics() {
-//			
-//		return Collections.unmodifiableSet(
-//			EnumSet.of(Characteristics.CONCURRENT,
-//				Characteristics.UNORDERED,
-//				Characteristics.IDENTITY_FINISH)				
-//				
-//			);
-//	}));
+		// ctrl 1
+		List<Integer> lst = newIntegerStream().collect(
+				new Collector<Integer, List<Integer>, List<Integer>>() {
+					@Override
+					public Supplier<List<Integer>> supplier() {
+						return LinkedList<Integer>::new;
+					}
+
+					@Override
+					public BiConsumer<List<Integer>, Integer> accumulator() {
+						return (lst, t) -> lst.add(t);
+					}
+
+					@Override
+					public BinaryOperator<List<Integer>> combiner() {
+						return (l, r) -> {
+							l.addAll(r);
+							return l;
+						};
+					}
+
+					@Override
+					public Function<List<Integer>, List<Integer>> finisher() {
+						return Function.identity();
+					}
+
+					@Override
+					public Set<Characteristics> characteristics() {
+
+						return Collections.unmodifiableSet(EnumSet.of(
+								Characteristics.CONCURRENT,
+								Characteristics.UNORDERED,
+								Characteristics.IDENTITY_FINISH)
+
+				);
+					}
+				});
+
 	}
 
 	@Disabled
