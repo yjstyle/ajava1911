@@ -41,7 +41,6 @@ public class Main {
 			ExecutorService exec = Executors
 					.newSingleThreadScheduledExecutor();
 			Future<List<String>> future = exec.submit(() -> {
-
 				return loadDataset(in).stream()
 						.collect(Collectors.groupingBy(
 								Complain::getCompany,
