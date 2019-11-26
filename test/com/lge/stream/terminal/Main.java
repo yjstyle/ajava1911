@@ -4,13 +4,23 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryPoolMXBean;
 import java.lang.management.MemoryUsage;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.DoubleSummaryStatistics;
+import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
 import java.util.Random;
+import java.util.Set;
+import java.util.function.BiConsumer;
+import java.util.function.BinaryOperator;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
@@ -20,19 +30,102 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 class Main {
+
 	// @Disabled
 	@Test
+	void testCollectorHelper() {
+		List<Integer> lst = newIntegerStream().collect(
+				Collectors.toCollection(LinkedList<Integer>::new));
+		newIntegerStream().collect(Collectors.toUnmodifiableList());
+	
+		Collections.unmodifiableList(
+				(newIntegerStream().collect(Collectors.toList())));
+		
+		String str = newIntegerStream().map(String::valueOf)
+			.collect(Collectors.joining());
+		System.out.println(str);
+		
+		DoubleSummaryStatistics s = newIntegerStream().collect(
+				Collectors.summarizingDouble(
+						Integer::intValue));
+		System.out.println(s);
+		
+	}
+
+	@Disabled
+	@Test
+	void testCollectOf() {
+		Stream<Integer> s = newIntegerStream();
+		ArrayList<Integer> lst = s.collect(newListColletor());
+		// ArrayList<Integer>::new,
+		// ArrayList::add, ArrayList::addAll
+	}
+
+	static Collector<Integer, ArrayList<Integer>, ArrayList<Integer>> newListColletor() {
+		return Collector.of(ArrayList<Integer>::new, ArrayList::add,
+				(l, r) -> {
+					l.addAll(r);
+					return l;
+				});
+	}
+
+	@Disabled
+	@Test
+	void testCollect2() {
+//		// ctrl 1
+//		List<Integer> lst = 
+//			newIntegerStream().collect(new Collector<Integer,
+//					List<Integer>, List<Integer>>(){
+//		@Override
+//		public Supplier<List<Integer>> supplier() {
+//			return LinkedList<Integer>::new;
+//		}
+//
+//		@Override
+//		public BiConsumer<List<Integer>, Integer> accumulator() {
+//			return (lst, t) -> lst.add(t);
+//		}
+//
+//		@Override
+//		public BinaryOperator<List<Integer>> combiner() {
+//			return (l, r) -> {
+//				l.addAll(r);
+//				return l;
+//			};
+//		}
+//
+//		@Override
+//		public Function<List<Integer>, List<Integer>> finisher() {
+//			return Function.identity();
+//		}
+//
+//		@Override
+//		public Set<Characteristics> characteristics() {
+//			
+//		return Collections.unmodifiableSet(
+//			EnumSet.of(Characteristics.CONCURRENT,
+//				Characteristics.UNORDERED,
+//				Characteristics.IDENTITY_FINISH)				
+//				
+//			);
+//	}));
+	}
+
+	@Disabled
+	@Test
 	void testCollectPractice() {
-		//다음 출력결과를 참고하여 스트림을 HashMap으로 변형하세요
+		// 다음 출력결과를 참고하여 스트림을 HashMap으로 변형하세요
 
 		Stream<Integer> numbers = newIntegerStream();
-		HashMap<Integer, String> map =
-				numbers.collect(HashMap<Integer, String>::new,
-						(m, t)->{m.put(t,"my-value"+t);}, 
-						(m, m2)->{m.putAll(m2);});
+		HashMap<Integer, String> map = numbers
+				.collect(HashMap<Integer, String>::new, (m, t) -> {
+					m.put(t, "my-value" + t);
+				}, (m, m2) -> {
+					m.putAll(m2);
+				});
 		System.out.println(map);
-		//{1:"my-value=1", 2:"my-value=2", 3:"my-value=3"}
-		
+		// {1:"my-value=1", 2:"my-value=2", 3:"my-value=3"}
+
 		List<Integer> lst = newIntegerStream()
 				.collect(Collectors.toList());
 
