@@ -35,18 +35,15 @@ public class Main {
 	public void quiz1() throws URISyntaxException, IOException {
 
 		Path path = Paths.get(URL);
-		try (
-				BufferedReader in = Files.newBufferedReader(path)
-		) {
-			ExecutorService exec = Executors
-					.newSingleThreadScheduledExecutor();
+		try (BufferedReader in = Files.newBufferedReader(path)) {
+			ExecutorService exec = Executors.newSingleThreadScheduledExecutor();
 			Future<List<String>> future = exec.submit(() -> {
 				return loadDataset(in).stream()
-						.collect(Collectors.groupingBy(
-								Complain::getCompany,
+						.collect(Collectors.groupingBy(Complain::getCompany,
 								Collectors.counting()))
 						.entrySet().stream()
-						.sorted(Comparator.comparing(Entry<String, Long>::getValue)
+						.sorted(Comparator
+								.comparing(Entry<String, Long>::getValue)
 								.reversed())
 						.limit(10).map(e -> e.getKey())
 						.collect(Collectors.toList());
@@ -85,8 +82,7 @@ public class Main {
 				Complain fields = new Complain(Arrays.asList(r));
 				complains.add(fields);
 			} else {
-				System.out.println(
-						"[ERROR]" + card + ":" + Arrays.toString(r));
+				System.out.println("[ERROR]" + card + ":" + Arrays.toString(r));
 			}
 		}
 
@@ -120,8 +116,7 @@ class Complain {
 	public Complain(List<String> next) {
 		int index = 0;
 
-		this.dataReceived = LocalDate.parse(next.get(index++),
-				formatter);
+		this.dataReceived = LocalDate.parse(next.get(index++), formatter);
 		this.product = next.get(index++);
 		this.subproduct = next.get(index++);
 		this.issue = next.get(index++);
@@ -134,8 +129,7 @@ class Complain {
 		this.tags = next.get(index++);
 		this.consumerConsentProvided = next.get(index++);
 		this.submittedVia = next.get(index++);
-		this.dateSentToCompany = LocalDate.parse(next.get(index++),
-				formatter);
+		this.dateSentToCompany = LocalDate.parse(next.get(index++), formatter);
 		this.companyResponseToConsumer = next.get(index++);
 		this.timelyResponse = "Yes".equals(next.get(index++));
 		this.consumerDisputed = "Yes".equals(next.get(index++));
@@ -220,22 +214,18 @@ class Complain {
 
 	@Override
 	public String toString() {
-		return "Complain [dataReceived=" + dataReceived + ", product="
-				+ product + ", subproduct=" + subproduct + ", issue="
-				+ issue + ", subissue=" + subissue
-				+ ", consumerComplaintNarrative="
-				+ consumerComplaintNarrative
-				+ ", companyPublicResponse=" + companyPublicResponse
-				+ ", company=" + company + ", state=" + state
-				+ ", zipCode=" + zipCode + ", tags=" + tags
-				+ ", consumerConsentProvided="
-				+ consumerConsentProvided + ", submittedVia="
-				+ submittedVia + ", dateSentToCompany="
+		return "Complain [dataReceived=" + dataReceived + ", product=" + product
+				+ ", subproduct=" + subproduct + ", issue=" + issue
+				+ ", subissue=" + subissue + ", consumerComplaintNarrative="
+				+ consumerComplaintNarrative + ", companyPublicResponse="
+				+ companyPublicResponse + ", company=" + company + ", state="
+				+ state + ", zipCode=" + zipCode + ", tags=" + tags
+				+ ", consumerConsentProvided=" + consumerConsentProvided
+				+ ", submittedVia=" + submittedVia + ", dateSentToCompany="
 				+ dateSentToCompany + ", companyResponseToConsumer="
 				+ companyResponseToConsumer + ", timelyResponse="
-				+ timelyResponse + ", consumerDisputed="
-				+ consumerDisputed + ", complaintId=" + complaintId
-				+ "]";
+				+ timelyResponse + ", consumerDisputed=" + consumerDisputed
+				+ ", complaintId=" + complaintId + "]";
 	}
 
 }
