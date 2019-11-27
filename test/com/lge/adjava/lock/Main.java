@@ -14,7 +14,59 @@ import org.junit.jupiter.api.Test;
 class Main {
 	@Test
 	void testPhaser() {
-		
+		ExecutorService exe = Executors.newCachedThreadPool();
+		Phaser ph = new Phaser(1) {
+			protected boolean onAdvance(int phase, int parties) {
+				System.out.println("phase=" + phase + ", parties=" + parties);
+				return false;
+			}
+		};
+		assertEquals(0, ph.getPhase());
+
+		// when
+		exe.submit(new LongRunningAction("thread-1", ph));
+		exe.submit(new LongRunningAction("thread-2", ph));
+		exe.submit(new LongRunningAction("thread-3", ph));
+
+		// then
+		ph.arriveAndAwaitAdvance();
+		assertEquals(1, ph.getPhase());
+
+		// and
+		exe.submit(new LongRunningAction("thread-4", ph));
+		exe.submit(new LongRunningAction("thread-5", ph));
+
+		ph.arriveAndAwaitAdvance();
+
+		assertEquals(2, ph.getPhase());
+
+		ph.arriveAndDeregister();
+
+	}
+
+	class LongRunningAction implements Runnable {
+		private String name;
+		private Phaser ph;
+
+		LongRunningAction(String threadName, Phaser ph) {
+			this.name = threadName;
+			this.ph = ph;
+			this.ph.register();
+		}
+
+		@Override
+		public void run() {
+			System.out.println("This is phase " + ph.getPhase());
+			System.out
+					.println("Thread " + name + " before long running action");
+			ph.arriveAndAwaitAdvance();
+			try {
+				Thread.sleep(20);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			ph.arriveAndDeregister();
+		}
 	}
 
 	@Disabled

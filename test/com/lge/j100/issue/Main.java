@@ -23,31 +23,56 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.simpleflatmapper.csv.CsvParser;
 
 public class Main {
 
 	private static final String URL = "data/Consumer_Complaints.csv";
 
+	@Disabled
 	@Test
-	public void quiz1() throws URISyntaxException, IOException {
+	public void quiz3() throws URISyntaxException, IOException {
+		// [① Top10 회사이름]과 그리고 [② Top10제품이름]에 모두 해당하는 레코드에 대하여,
+		// 회사 별 제품 개수를 구하여라.
+		// 최종 결과 Type: Map<String, Map<String, Long>> map;
+		
+		List<String> cLst = getTopTen(Complain::getCompany);
+		List<String> pLst = getTopTen(Complain::getProduct);
+		
+		Predicate<Complain> predicate = (t) -> cLst.contains(t.getCompany())
+				&& pLst.contains(t.getProduct());
+		
+		Map<String, Map<String, Long>> map 
+			= newComplainStream().filter(predicate)
+				.collect(Collectors.groupingBy(Complain::getCompany, 
+						Collectors.groupingBy(Complain::getProduct,
+							Collectors.counting())));
+	}
 
-		Path path = Paths.get(URL);
-		try (BufferedReader in = Files.newBufferedReader(path)) {
+	List<String> getTopTen(Function<Complain, String> f) throws IOException {
+		return newComplainStream()
+				.collect(Collectors.groupingBy(f, Collectors.counting()))
+				.entrySet().stream()
+				.sorted(Comparator.comparing(Entry<String, Long>::getValue)
+						.reversed())
+				.limit(10).map(e -> e.getKey()).collect(Collectors.toList());
+	}
+
+	@Disabled
+	@Test
+	public void quiz2() throws URISyntaxException, IOException {
+
+		try {
 			ExecutorService exec = Executors.newSingleThreadScheduledExecutor();
-			Future<List<String>> future = exec.submit(() -> {
-				return loadDataset(in).stream()
-						.collect(Collectors.groupingBy(Complain::getCompany,
-								Collectors.counting()))
-						.entrySet().stream()
-						.sorted(Comparator
-								.comparing(Entry<String, Long>::getValue)
-								.reversed())
-						.limit(10).map(e -> e.getKey())
-						.collect(Collectors.toList());
-			});
+			Future<List<String>> future = exec
+					.submit(() -> getTopTen(Complain::getProduct));
 
 			List<String> byCompany = future.get();
 			System.out.println(byCompany.size());
@@ -55,6 +80,25 @@ public class Main {
 		} catch (InterruptedException | ExecutionException e) {
 			e.printStackTrace();
 		}
+	}
+
+	@Disabled
+	@Test
+	public void quiz1() throws URISyntaxException, IOException {
+		ExecutorService exec = Executors.newSingleThreadScheduledExecutor();
+		Future<List<String>> future = exec
+				.submit(() -> getTopTen(Complain::getCompany));
+
+		List<String> byCompany;
+		try {
+			byCompany = future.get();
+			System.out.println(byCompany.size());
+			terminateThreads(exec);
+		} catch (InterruptedException | ExecutionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
 	}
 
 	private static void terminateThreads(ExecutorService executor)
@@ -65,6 +109,11 @@ public class Main {
 			System.out.println("Forcing shutdown...");
 			executor.shutdownNow();
 		}
+	}
+
+	Stream<Complain> newComplainStream() throws IOException {
+		return CsvParser.skip(1).stream(Files.newBufferedReader(Paths.get(URL)))
+				.map(array -> new Complain(Arrays.asList(array))).parallel();
 	}
 
 	List<Complain> loadDataset(BufferedReader in) throws IOException {
