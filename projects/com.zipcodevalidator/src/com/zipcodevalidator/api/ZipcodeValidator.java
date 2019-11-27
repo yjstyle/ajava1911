@@ -1,7 +1,9 @@
 package com.zipcodevalidator.api;
 
-public interface ZipcodeValidator {
+import com.zipvalidator.model.api.ZipCodeValidationResult;
 
-	boolean validateZipCode(String value);
+public interface ZipcodeValidator {
+	// ctrl+1
+	ZipCodeValidationResult validateZipCode(String value);
 
 }
